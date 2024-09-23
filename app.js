@@ -1,15 +1,18 @@
 const express = require('express'); //express
 const mongoose = require('mongoose'); //mongodb
 
-const app = express();
+const User = require('./models/User');
+const Book = require('./models/Book');
 
-mongoose.connect('mongodb+srv://Nyan:meow@cluster0.0ky8h.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0',
+mongoose.connect('mongodb+srv://Nyan:meow@cluster0.0ky8h.mongodb.net/P7?retryWrites=true&w=majority&appName=Cluster0',
     {
         useNewUrlParser: true,
         useUnifiedTopology: true
     })
     .then(() => console.log('Connexion à MongoDB réussie !'))
     .catch(() => console.log('Connexion à MongoDB échouée !'));
+
+const app = express();
 
 app.use(express.json());
 
@@ -22,29 +25,53 @@ app.use((req, res, next) => {
 
 // POST --- SIGNUP / LOGIN
 app.post('/api/auth/signup', (req, res, next) => { // signup
-    console.log(req.body);
-    res.status(201).json({ // 201 = create
-        message: 'Signup create'
-    });
+    User.findOne({ email: req.body.email })
+        .then((vr) => {
+            if (vr) {
+                res.status(400).json({ message: 'Cette email existe déjà' });
+            } else {
+                const user = new User({
+                    ...req.body
+                });
+                user.save()
+                    .then(() => res.status(201).json({ message: 'Signup create' }))
+                    .catch(error => res.status(400).json({ error }));
+            }
+        })
+        .catch(error => res.status(400).json({ error }));
 });
 
 app.post('/api/auth/login', (req, res, next) => { // login
-    console.log(req.body);
-    res.status(200).json({ // 200 = ok
-        userId: '',
-        token: '',
-    });
+    const { email, password } = req.body;
+
+    User.findOne({ email: email })
+        .then(user => {
+            if (!user) {
+                return res.status(400).json({ error });
+            }
+
+            if (user.password === password) {
+                res.status(200).json({
+                    userId: user._id,
+                });
+            } else {
+                res.status(400).json({ error });
+            }
+        })
+        .catch(error => res.status(400).json({ error }));
 });
 
 // GET --- SEARCH LIBRAIRIE
 app.get('/api/books', (req, res, next) => { // librairie
-    res.status(200).json({
-    });
+    Book.find()
+        .then(book => res.status(200).json(book))
+        .catch(error => res.status(400).json({ error }));
 });
 
 app.get('/api/books/:id', (req, res, next) => { // unique book by id
-    res.status(200).json({
-    });
+    Book.findOne({ _id: req.params.id })
+        .then(book => res.status(200).json(book))
+        .catch(error => res.status(404).json({ error }));
 });
 
 app.get('/api/books/bestrating', (req, res, next) => { // top 3
