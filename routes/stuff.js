@@ -1,31 +1,10 @@
-const express = require('express'); //express
-const mongoose = require('mongoose'); //mongodb
-const stuffRoutes = require('./routes/stuff');
-/*
-const User = require('./models/User');
-const Book = require('./models/Book');
-*/
-mongoose.connect('mongodb+srv://Nyan:meow@cluster0.0ky8h.mongodb.net/P7?retryWrites=true&w=majority&appName=Cluster0',
-    {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-    })
-    .then(() => console.log('Connexion à MongoDB réussie !'))
-    .catch(() => console.log('Connexion à MongoDB échouée !'));
+const express = require('express');
+const router = express.Router();
 
-const app = express();
+const User = require('../models/User');
+const Book = require('../models/Book');
 
-app.use(express.json());
-
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    next();
-});
-
-// POST --- SIGNUP / LOGIN
-/*app.post('/api/auth/signup', (req, res, next) => { // signup
+router.post('/auth/signup', (req, res, next) => { // signup
     const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!regex.test(req.body.email)) {
         return res.status(400).json({ message: 'Email invalide' });
@@ -47,7 +26,7 @@ app.use((req, res, next) => {
         .catch(error => res.status(400).json({ error }));
 });
 
-app.post('/api/auth/login', (req, res, next) => { // login
+router.post('/auth/login', (req, res, next) => { // login
     const { email, password } = req.body;
 
     User.findOne({ email: email })
@@ -68,49 +47,49 @@ app.post('/api/auth/login', (req, res, next) => { // login
 });
 
 // GET --- SEARCH LIBRAIRIE
-app.get('/api/books', (req, res, next) => { // librairie
+router.get('/books', (req, res, next) => { // librairie
     Book.find()
         .then(book => res.status(200).json(book))
         .catch(error => res.status(400).json({ error }));
 });
 
-app.get('/api/books/:id', (req, res, next) => { // unique book by id
+router.get('/books/:id', (req, res, next) => { // unique book by id
     Book.findOne({ _id: req.params.id })
         .then(book => res.status(200).json(book))
         .catch(error => res.status(404).json({ error }));
 });
 
-app.get('/api/books/bestrating', (req, res, next) => { // top 3
+router.get('/books/bestrating', (req, res, next) => { // top 3
     res.status(200).json({
     });
 });
 
 // POST --- BOOK
-app.post('/api/books', (req, res, next) => {
+router.post('/books', (req, res, next) => {
     res.status(200).json({
     });
 });
 
 // PUT --- BOOK ID
-app.put('/api/books/:id', (req, res, next) => {
+router.put('/books/:id', (req, res, next) => {
     res.status(200).json({
     });
 });
 
 // DELETE --- BOOK ID
-app.delete('/api/books/:id', (req, res, next) => {
+router.delete('/books/:id', (req, res, next) => {
     res.status(200).json({
     });
 });
 
 // POST --- RATING
-app.post('/api/books/:id/rating', (req, res, next) => {
+router.post('/books/:id/rating', (req, res, next) => {
     res.status(200).json({
     });
 });
 
 // test random
-app.get('/api/meow', (req, res, next) => {
+router.get('/meow', (req, res, next) => {
     const meow = [
         {
             animal: 'cat',
@@ -120,8 +99,6 @@ app.get('/api/meow', (req, res, next) => {
         }
     ]
     res.status(200).json(meow);
-});*/
+});
 
-app.use('/api/stuff', stuffRoutes);
-
-module.exports = app;
+module.exports = router;
