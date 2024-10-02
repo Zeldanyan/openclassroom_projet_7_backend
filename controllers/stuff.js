@@ -5,7 +5,7 @@ const fs = require('fs');
 const User = require('../models/User');
 const Book = require('../models/Book');
 
-exports.signup = (req, res, next) => { // signup
+exports.signup = async (req, res, next) => { // signup
     const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/; //regex for mail
 
     if (!regex.test(req.body.email)) { //regex test
@@ -33,7 +33,7 @@ exports.signup = (req, res, next) => { // signup
         .catch(error => res.status(500).json({ error }));
 };
 
-exports.login = (req, res, next) => { // login
+exports.login = async (req, res, next) => { // login
     const { email, password } = req.body;
 
     User.findOne({ email: email })
@@ -60,25 +60,25 @@ exports.login = (req, res, next) => { // login
         .catch(error => res.status(500).json({ error }));
 }
 
-exports.bookAll = (req, res, next) => { // librairie
+exports.bookAll = async (req, res, next) => { // librairie
     Book.find()
         .then(book => res.status(200).json(book))
         .catch(error => res.status(400).json({ error }));
 };
 
-exports.bookID = (req, res, next) => { // unique book by id
+exports.bookID = async (req, res, next) => { // unique book by id
     Book.findOne({ _id: req.params.id })
         .then(book => res.status(200).json(book))
         .catch(error => res.status(404).json({ error }));
 };
 
-exports.bookRate = (req, res, next) => { // top 3
+exports.bookRate = async (req, res, next) => { // top 3
     res.status(200).json({
     });
 };
 
-exports.bookPost = (req, res, next) => {
-    const bookCreate = JSON.parse(req.body.book);
+exports.bookPost = async (req, res, next) => {
+    const bookCreate = await JSON.parse(req.body.book);
     delete bookCreate._userId;
     const book = new Book({
         ...bookCreate,
@@ -91,7 +91,7 @@ exports.bookPost = (req, res, next) => {
         .catch(error => { res.status(400).json({ error }) })
 };
 
-exports.bookPut = (req, res, next) => {
+exports.bookPut = async (req, res, next) => {
     const bookEdit = req.file ? {
         ...JSON.parse(req.body.book),
         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
@@ -102,6 +102,10 @@ exports.bookPut = (req, res, next) => {
             if (book.userId != req.auth.userId) {
                 res.status(401).json({ message: 'Not authorized' });
             } else {
+                if (req.file) { //supprimer ancienne images
+                    const filename = book.imageUrl.split('/images/')[1];
+                    fs.unlink(`images/${filename}`, () => { });
+                }
                 Book.updateOne({ _id: req.params.id }, { ...bookEdit, _id: req.params.id })
                     .then(() => res.status(200).json({ message: 'Objet modifié!' }))
                     .catch(error => res.status(401).json({ error }));
@@ -112,7 +116,7 @@ exports.bookPut = (req, res, next) => {
         });
 };
 
-exports.bookDelete = (req, res, next) => {
+exports.bookDelete = async (req, res, next) => {
     Book.findOne({ _id: req.params.id })
         .then(book => {
             if (book.userId != req.auth.userId) {
@@ -131,7 +135,20 @@ exports.bookDelete = (req, res, next) => {
         });
 };
 
-exports.bookRatePost = (req, res, next) => {
-    res.status(200).json({
-    });
+exports.bookRatePost = async (req, res, next) => { //rating book
+    const { userId, rating } = req.body;
+    const book = await Book.findOne({ _id: req.params.id });
+    if (!book) {
+        res.status(404).json({ message: 'N existe pas' });
+    }
+    if (book.ratings.find(rate => rate.userId === userId)) { //only one rate par utilisateurs
+        res.status(400).json({ message: 'Deja noté' });
+    } else {
+        book.ratings.push({
+            userId: userId,
+            grade: rating
+        });
+        book.save();
+        res.status(201).json(book);
+    }
 };
