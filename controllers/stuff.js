@@ -4,6 +4,7 @@ const fs = require('fs');
 
 const User = require('../models/User');
 const Book = require('../models/Book');
+const { log } = require('console');
 
 exports.signup = async (req, res, next) => { // signup
     const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/; //regex for mail
@@ -80,10 +81,11 @@ exports.bookRate = async (req, res, next) => { // top 3
 exports.bookPost = async (req, res, next) => {
     const bookCreate = await JSON.parse(req.body.book);
     delete bookCreate._userId;
+
     const book = new Book({
         ...bookCreate,
         userId: req.auth.userId,
-        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
     });
 
     book.save()
