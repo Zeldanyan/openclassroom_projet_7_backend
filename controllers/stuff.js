@@ -125,8 +125,8 @@ exports.bookDelete = async (req, res, next) => {
                 res.status(401).json({ message: 'Not authorized' });
             } else {
                 const filename = book.imageUrl.split('/images/')[1];
-                fs.unlink(`images/${filename}`, () => {
-                    Book.deleteOne({ _id: req.params.id })
+                fs.unlink(`images/${filename}`, () => { // supp image
+                    Book.deleteOne({ _id: req.params.id }) // supp in database
                         .then(() => { res.status(200).json({ message: 'Objet supprimé !' }) })
                         .catch(error => res.status(401).json({ error }));
                 });
@@ -146,11 +146,14 @@ exports.bookRatePost = async (req, res, next) => { //rating book
     if (book.ratings.find(rate => rate.userId === userId)) { //only one rate par utilisateurs
         res.status(400).json({ message: 'Deja noté' });
     } else {
-        book.ratings.push({
+        book.ratings.push({ // new grade user
             userId: userId,
             grade: rating
         });
-        book.save();
+
+        book.averageRating = book.ratings.reduce((sum, rating) => sum + rating.grade, 0) / book.ratings.length; //calcul note moyenne
+
+        book.save(); // save
         res.status(201).json(book);
     }
 };
