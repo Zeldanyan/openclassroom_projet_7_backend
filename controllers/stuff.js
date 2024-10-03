@@ -73,9 +73,13 @@ exports.bookID = async (req, res, next) => { // unique book by id
         .catch(error => res.status(404).json({ error }));
 };
 
-exports.bookRate = async (req, res, next) => { // top 3
-    res.status(200).json({
-    });
+exports.bookBestRate = async (req, res, next) => { // top 3
+    try {
+        const rate3 = await Book.find().sort({ averageRating: -1 }).limit(3); //trier par decroissant et limiter a 3 resultat
+        res.status(200).json(rate3);
+    } catch (error) {
+        res.status(500).json({ error });
+    }
 };
 
 exports.bookPost = async (req, res, next) => {
@@ -85,7 +89,7 @@ exports.bookPost = async (req, res, next) => {
     const book = new Book({
         ...bookCreate,
         userId: req.auth.userId,
-        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`, //save image
     });
 
     book.save()
@@ -94,10 +98,10 @@ exports.bookPost = async (req, res, next) => {
 };
 
 exports.bookPut = async (req, res, next) => {
-    const bookEdit = req.file ? {
-        ...JSON.parse(req.body.book),
+    const bookEdit = req.file ? { // if image edit
+        ...JSON.parse(req.body.book), //yes
         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    } : { ...req.body };
+    } : { ...req.body }; //no
     delete bookEdit._userId;
     Book.findOne({ _id: req.params.id })
         .then((book) => {
@@ -151,7 +155,7 @@ exports.bookRatePost = async (req, res, next) => { //rating book
             grade: rating
         });
 
-        book.averageRating = book.ratings.reduce((sum, rating) => sum + rating.grade, 0) / book.ratings.length; //calcul note moyenne
+        book.averageRating = book.ratings.reduce((sum, rating) => sum + rating.grade, 0) / book.ratings.length; //calcul note moyenne, somme des notes diviser par nombre de notes
 
         book.save(); // save
         res.status(201).json(book);
