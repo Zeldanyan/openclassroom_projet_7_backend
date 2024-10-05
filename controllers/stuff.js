@@ -98,7 +98,7 @@ exports.bookPost = async (req, res, next) => {
 };
 
 exports.bookPut = async (req, res, next) => {
-    const bookEdit = req.file ? { // if image edit
+    const bookEdit = await req.file ? { // if image edit
         ...JSON.parse(req.body.book), //yes
         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
     } : { ...req.body }; //no
@@ -155,7 +155,7 @@ exports.bookRatePost = async (req, res, next) => { //rating book
             grade: rating
         });
 
-        book.averageRating = book.ratings.reduce((sum, rating) => sum + rating.grade, 0) / book.ratings.length; //calcul note moyenne, somme des notes diviser par nombre de notes
+        book.averageRating = Math.round((book.ratings.reduce((sum, rating) => sum + rating.grade, 0) / book.ratings.length) * 10) / 10; //calcul note moyenne, somme des notes diviser par nombre de notes
 
         book.save(); // save
         res.status(201).json(book);
